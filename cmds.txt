@@ -1,0 +1,6 @@
+Migrating DB Schema
+alembic revision --autogenerate -m "Comment"
+alembic upgrade head
+
+admin
+racetrack.api@admin
