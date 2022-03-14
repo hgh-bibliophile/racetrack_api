@@ -12,6 +12,8 @@ orjson = "*"
 alembic = "*"
 cryptography = "*"
 fastapi-crudrouter = "*"
+asyncpg = "*"
+psycopg2 = "*"
 
 [dev-packages]
 

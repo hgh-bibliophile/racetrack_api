@@ -4,3 +4,8 @@ alembic upgrade head
 
 admin
 racetrack.api@admin
+
+git add --all
+git commit -m "Setting up Heroku"
+git push -u origin main
+git push heroku main
