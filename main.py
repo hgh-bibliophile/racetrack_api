@@ -13,6 +13,8 @@ import ormar
 
 app = FastAPI()
 
+app.state.database = database
+
 origins = [
     "http://api.racetrack.gratiafides.com",
     "https://api.racetrack.gratiafides.com",
