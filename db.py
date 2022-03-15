@@ -11,7 +11,7 @@ if not POSTGRESQL_DATABASE_URL:
     ORMAR_DATABASE_URL = SQLITE_DATABASE_URL
     database = databases.Database(ORMAR_DATABASE_URL)
 else:
-    ORMAR_DATABASE_URL = POSTGRESQL_DATABASE_URL.replace("postgres://", "postgresql://")
+    ORMAR_DATABASE_URL = POSTGRESQL_DATABASE_URL
     database = databases.Database(ORMAR_DATABASE_URL, min_size=2, max_size=5)
 
 metadata = sqlalchemy.MetaData()
