@@ -32,7 +32,7 @@ import db
 if db_name == 'sqlite':
     DB_URL = db.SQLITE_DATABASE_URL
 elif db_name == 'postgresql' and os.environ.get('DATABASE_URL', False):
-    DB_URL = db.POSTGRESQL_DATABASE_URL
+    DB_URL = db.POSTGRESQL_DATABASE_URL.replace("postgres://", "postgresql://")
 else:
     os.exit()
 
@@ -52,7 +52,7 @@ def run_migrations_offline():
     script output.
 
     """
-   
+
     context.configure(
         url=url,
         target_metadata=target_metadata,
