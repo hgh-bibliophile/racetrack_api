@@ -16,6 +16,8 @@ app = FastAPI()
 app.state.database = database
 
 origins = [
+    "http://racetrack.gratiafides.com",
+    "https://racetrack.gratiafides.com",
     "http://api.racetrack.gratiafides.com",
     "https://api.racetrack.gratiafides.com",
     "http://localhost:3000",
