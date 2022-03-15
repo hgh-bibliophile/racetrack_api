@@ -2,7 +2,8 @@ import databases
 import sqlalchemy
 import uvicorn
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+#from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.cors import CORSMiddleware
 
 from fastapi_crudrouter import OrmarCRUDRouter
 
