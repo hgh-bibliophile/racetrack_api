@@ -1,8 +1,8 @@
-"""PostgreSQL DB
+"""fastapi-users data schema
 
-Revision ID: 6da632130587
+Revision ID: 9c174a97d76b
 Revises: 
-Create Date: 2022-03-14 17:00:05.610551
+Create Date: 2022-03-17 00:03:18.515912
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '6da632130587'
+revision = '9c174a97d76b'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -25,13 +25,17 @@ def upgrade():
     sa.UniqueConstraint('name')
     )
     op.create_table('users',
-    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('id', sa.CHAR(36), nullable=False),
+    sa.Column('email', sa.String(length=255), nullable=False),
+    sa.Column('hashed_password', sa.String(length=255), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('is_superuser', sa.Boolean(), nullable=False),
+    sa.Column('is_verified', sa.Boolean(), nullable=False),
     sa.Column('username', sa.String(length=64), nullable=False),
-    sa.Column('password', sa.Text(), nullable=False),
-    sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     with op.batch_alter_table('users', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_users_email'), ['email'], unique=True)
         batch_op.create_index(batch_op.f('ix_users_username'), ['username'], unique=True)
 
     op.create_table('lanes',
@@ -49,7 +53,7 @@ def upgrade():
 
     op.create_table('races',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('created_date', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_date', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.Column('name', sa.String(length=64), nullable=False),
     sa.Column('watch_link', sa.String(length=25), nullable=False),
     sa.Column('track', sa.Integer(), nullable=True),
@@ -57,7 +61,7 @@ def upgrade():
     sa.Column('race_date', sa.Date(), nullable=True),
     sa.Column('race_time', sa.Time(), nullable=True),
     sa.Column('status', sa.String(length=6), nullable=False),
-    sa.Column('owner', sa.Integer(), nullable=True),
+    sa.Column('owner', sa.CHAR(36), nullable=True),
     sa.ForeignKeyConstraint(['owner'], ['users.id'], name='fk_races_users_id_owner'),
     sa.ForeignKeyConstraint(['track'], ['tracks.id'], name='fk_races_tracks_id_track'),
     sa.PrimaryKeyConstraint('id')
@@ -81,7 +85,7 @@ def upgrade():
 
     op.create_table('heats',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('created_date', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('created_date', sa.DateTime(), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.Column('race', sa.Integer(), nullable=True),
     sa.Column('heat_number', sa.Integer(), nullable=False),
     sa.Column('ran_at', sa.DateTime(), nullable=True),
@@ -129,6 +133,7 @@ def downgrade():
     op.drop_table('lanes')
     with op.batch_alter_table('users', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_users_username'))
+        batch_op.drop_index(batch_op.f('ix_users_email'))
 
     op.drop_table('users')
     op.drop_table('tracks')

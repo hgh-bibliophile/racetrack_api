@@ -18,8 +18,8 @@ fileConfig(config.config_file_name)
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from models.models import BaseMeta
-target_metadata = BaseMeta.metadata
+from models._migrate import metadata
+target_metadata = metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -78,7 +78,7 @@ def run_migrations_online():
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
-    
+
     #connectable = create_engine(
     #    URL,
     #    poolclass=pool.NullPool

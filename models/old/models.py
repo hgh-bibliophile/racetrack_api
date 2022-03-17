@@ -2,7 +2,8 @@ import datetime
 import ormar
 import sqlalchemy
 from db import database, metadata
-
+from fastapi_users import models as user_models
+from fastapi_users.db import OrmarBaseUserModel, OrmarUserDatabase
 # ----------
 # Mixins
 # ----------
@@ -29,18 +30,44 @@ class BaseModel(ormar.Model, PKMixin):
 # User
 # ----------
 
-class User(BaseModel):
+class UserM(user_models.BaseUser):
+    username: str
+
+
+class UserCreate(user_models.BaseUserCreate):
+    username: str
+
+
+class UserUpdate(user_models.BaseUserUpdate):
+    username: str
+
+
+class UserDB(User, user_models.BaseUserDB):
+    username: str
+
+class User(OrmarBaseUserModel):
     class Meta(BaseMeta):
-        tablename = 'users'
+        tablename = "users"
 
     username: str = ormar.String(max_length=64, unique=True, index=True)
-    password: str = ormar.String(max_length=128,
-                                encrypt_secret="X$u54$C*x9^5",
-                                encrypt_backend=ormar.EncryptBackends.HASH)
 
-    is_active: bool = ormar.Boolean(default=True)
 
-#CreateUser = User.get_pydantic(exclude={"id": ...,"is_active": ...})
+
+async def get_user_db():
+    yield OrmarUserDatabase(UserDB, User)
+
+# class User(BaseModel):
+#     class Meta(BaseMeta):
+#         tablename = 'users'
+
+#     username: str = ormar.String(max_length=64, unique=True, index=True)
+#     password: str = ormar.String(max_length=128,
+#                                 encrypt_secret="X$u54$C*x9^5",
+#                                 encrypt_backend=ormar.EncryptBackends.HASH)
+
+#     is_active: bool = ormar.Boolean(default=True)
+
+# #CreateUser = User.get_pydantic(exclude={"id": ...,"is_active": ...})
 
 # ----------
 # Track

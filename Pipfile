@@ -14,6 +14,8 @@ cryptography = "*"
 fastapi-crudrouter = "*"
 asyncpg = "*"
 psycopg2 = "*"
+fastapi-websocket-pubsub = "*"
+fastapi-users = {extras = ["ormar"], version = "*"}
 
 [dev-packages]
 
