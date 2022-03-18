@@ -12,6 +12,7 @@ from models.race import Race
 from models.heat import Heat
 from models.heat_run import HeatRun
 
+from schema.ws import WS_HeatRun, WS_HeatRunUpdate
 from schema.races import RHeatRunIds, RHeatRunUpdateIds
 
 from .base import CORSRoute
@@ -27,15 +28,15 @@ manager = ConnectionManager()
 
 async def get_heat_runs(race: Race, heat_num: int):
     try:
-        heat = await race.heats.get(heat_number=heat_num)
-        return [run_ids(run) for run in await heat.runs.all()]
+        heat = await race.heats.prefetch_related(Heat.runs.lane).get(heat_number=heat_num)
+        return [await run_ids(run) for run in await heat.runs.all()]
     except NoMatch as e:
         msg = f"Not Found: Heat(heat_number={heat_num}, race_id={race_id})"
         raise HTTPException(status_code=404, detail=msg)
 
-async def update_heat_runs(race: Race, heat_num: int, runs: List[RHeatRunUpdateIds]):
+async def update_heat_runs(race: Race, heat_num: int, runs: List[WS_HeatRunUpdate]):
     try:
-        heat_db = await race.heats.get(heat_number=heat_num)
+        heat_db = await race.heats.prefetch_related(Heat.runs.lane).get(heat_number=heat_num)
         await heat_db.update(ran_at=datetime.now())
         heat_runs = {r.id: r for r in await heat_db.runs.all()}
 
@@ -53,15 +54,16 @@ async def update_heat_runs(race: Race, heat_num: int, runs: List[RHeatRunUpdateI
 
         run_data = []
         for run in heat_runs.values():
-            run_data.append(run_ids(run))
+            run_data.append(await run_ids(run))
 
         return run_data if len(err) == 0 else invalid_data(err)
     except NoMatch as e:
         msg = f"Not Found: Heat(heat_number={heat_num}, race_id={race.id})"
         raise HTTPException(status_code=404, detail=msg)
 
-def run_ids(heat_run: HeatRun):
-    return RHeatRunIds(**heat_run.dict())
+async def run_ids(heat_run: HeatRun):
+    await heat_run.lane.load()
+    return WS_HeatRun(**heat_run.dict())
 
 def ws_data(heat_num, heat_data):
     return {
@@ -70,7 +72,7 @@ def ws_data(heat_num, heat_data):
     }
 
 # Register a regular HTTP route
-@router.get("/{race_link}/heat/{heat_num}", response_model=list[RHeatRunIds])
+@router.get("/{race_link}/heat/{heat_num}", response_model=list[WS_HeatRun])
 async def start_heat(race_link: str, heat_num: int):
     try:
         race = await Race.objects.get(watch_link=race_link)
@@ -81,8 +83,8 @@ async def start_heat(race_link: str, heat_num: int):
         not_found(race_id)
     return await Heat.objects.filter(race__watch_link=race_link, heat_number=heat_num).get()
 
-@router.put('/{race_link}/heat/{heat_num}', response_model=list[RHeatRunIds])
-async def end_heat(race_link: str, heat_num: int, runs: List[RHeatRunUpdateIds]):
+@router.put('/{race_link}/heat/{heat_num}', response_model=list[WS_HeatRun])
+async def end_heat(race_link: str, heat_num: int, runs: List[WS_HeatRunUpdate]):
     try:
         race = await Race.objects.get(watch_link=race_link)
         heat_data = await update_heat_runs(race, heat_num, runs)

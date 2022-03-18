@@ -5,10 +5,17 @@ import datetime
 from .base import BaseModel, BaseId, RequiredBaseId
 
 from .heats import HeatReturnFull, HeatReturnIds
+from .ws import WS_HeatRun, WS_HeatRunUpdate
 
 # ----------
 # Race
 # ----------
+
+class RHeatRunIds(WS_HeatRun):
+    pass
+
+class RHeatRunUpdateIds(WS_HeatRunUpdate):
+    pass
 
 class RTrack(BaseId):
     name: Optional[str]
