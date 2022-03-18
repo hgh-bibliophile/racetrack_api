@@ -2,6 +2,8 @@ from fastapi_crudrouter import OrmarCRUDRouter
 from fastapi import HTTPException, Query, Depends, UploadFile
 from typing import List, Optional
 
+from datetime import datetime
+
 from ormar.exceptions import NoMatch, ModelError
 from pydantic.error_wrappers import ValidationError
 from asyncpg.exceptions import UniqueViolationError
@@ -14,6 +16,7 @@ from models.heat_run import HeatRun
 from schema.races import RaceCreate, RaceUpdate, RaceReturnId, RaceReturnFull, RaceReturnUpdate, RCar, RCarBase, RHeat, RHeatCreate, RHeatRunIds, RHeatUpdate, RHeatRunUpdateIds
 
 from .base import exclude_routes, CORSRoute
+from .ws import get_heat_runs, update_heat_runs
 
 from utils.routers import get_csv_reader, add_model, invalid_data, catch_errors
 
@@ -85,6 +88,20 @@ async def delete_one(item_id: int):
 async def get_all_race_cars(race_id: int):
     try:
         return await Car.objects.prefetch_related([Car.runs]).filter(race__id=race_id).all()
+    except NoMatch as e:
+        not_found(race_id)
+
+# Good - Delete all cars
+@router.delete('/{race_id}/cars')
+async def delete_all_race_cars(race_id: int):
+    deleted = 0
+    try:
+        deleted += await Car.objects.filter(race__id=race_id).count()
+        deleted += await HeatRun.objects.filter(heat__race__id=race_id).count()
+        #deleted += await Heat.objects.filter(race__id=race_id).count()
+        await Car.objects.filter(pk=race_id).delete(each=True)
+        #await Heat.objects.filter(pk=race_id).delete(each=True)
+        return {"deleted_rows": deleted}
     except NoMatch as e:
         not_found(race_id)
 
@@ -167,71 +184,107 @@ async def get_all_race_heats(race_id: int):
     except NoMatch as e:
         not_found(race_id)
 
+# Good - Delete all heats
+@router.delete('/{race_id}/heats')
+async def delete_all_race_heats(race_id: int):
+    deleted = 0
+    try:
+        deleted += await Heat.objects.filter(race__id=race_id).count()
+        deleted += await HeatRun.objects.filter(heat__race__id=race_id).count()
+        await Heat.objects.delete(race__id=race_id)
+        return {"deleted_rows": deleted}
+    except NoMatch as e:
+        not_found(race_id)
+
 # Good - Create & add new heats to one race -> doesn't return race in response
 @router.post('/{race_id}/heats', response_model=List[RHeat])
 async def create_race_heats(race_id: int, heats: List[RHeatCreate]):
     try:
-        race = await Race.objects.select_related([Race.track, Race.cars]).get(pk=race_id)
+        race = await Race.objects.select_related([Race.track.lanes, Race.cars]).get(pk=race_id)
         if race.track == None:
             return invalid_data(f'Race(pk={race_id}) does not have a valid track. Please assign a track before creating HeatRuns.')
 
-        lanes = {l.lane_number: l for l in await race.track.lanes.all()}
-        cars = {c.car_number: c for c in await race.cars.all()}
+        lanes = {l.lane_number: l.id for l in await race.track.lanes.all()}
+        cars = {c.car_number: c.id for c in await race.cars.all()}
+
+        new_heats = []
+        run_data = {}
+
+        for heat in heats:
+            heat_data = heat.dict(exclude_none=True)
+            heat_num = heat_data.get('heat_number')
+            run_data[int(heat_num)] = heat_data.pop('runs', [])
+            new_heats.append(Heat(race=race.id, heat_number=heat_num))
+
+        heat_numbers = run_data.keys()
 
         err = []
-        results = []
-        for heat in heats:
-            async def create_heat():
-                heat_data = heat.dict(exclude_none=True)
-                runs = heat_data.pop('runs', [])
-                heat = Heat(race=race, **heat_data)
+        async def create_heats():
+            await Heat.objects.bulk_create(new_heats)
+            heats = await Heat.objects.fields(['heat_number']).all(Heat.heat_number << heat_numbers)
 
-                for run in runs:
-                    heat.runs.append(HeatRun(
+            new_runs = []
+            for heat in heats:
+                for run in run_data.get(heat.heat_number, {}):
+                    new_runs.append(HeatRun(
+                        heat=heat.id,
                         lane=lanes.get(run.get('lane_number')),
                         car=cars.get(run.get('car_number'))
                     ))
 
-                await heat.save_related()
-                return heat
+            await HeatRun.objects.bulk_create(new_runs)
 
-            heat = await catch_errors(create_heat, err)
-            results.append(heat)
+        await catch_errors(create_heats, err)
+        if len(err) > 0:
+            return invalid_data(err)
 
-        return results if len(err) == 0 else invalid_data(err)
+        return await Heat.objects.prefetch_related([Heat.runs.car, Heat.runs.lane]).all(Heat.heat_number << heat_numbers)
+
     except NoMatch as e:
         not_found(race_id)
 
 # Good - Create & add new heats to one race via csv file
-@router.post('/{race_id}/heat/csv', response_model=List[RHeat])
+@router.post('/{race_id}/heats/csv', response_model=List[RHeat])
 async def create_race_heats_from_csv_file(race_id: int, csv_heats: UploadFile):
     try:
         reader = await get_csv_reader(csv_heats)
-        race = await Race.objects.prefetch_related([Race.track, Race.cars]).get(pk=race_id)
+        race = await Race.objects.prefetch_related([Race.track.lanes, Race.cars]).get(pk=race_id)
         if race.track == None:
             return invalid_data(f'Race(pk={race_id}) does not have a valid track. Please assign a track before creating HeatRuns.')
 
-        lanes = {str(l.lane_number): l for l in await race.track.lanes.all()}
-        cars = {str(c.car_number): c for c in await race.cars.all()}
+        lanes = {str(l.lane_number): l.id for l in await race.track.lanes.all()}
+        cars = {str(c.car_number): c.id for c in await race.cars.all()}
+
+        new_heats = []
+        run_data = {}
+        for heat_data in reader:
+            heat_num = heat_data.pop('heat_number')
+            run_data[int(heat_num)] = heat_data.items()
+            new_heats.append(Heat(race=race.id, heat_number=heat_num))
+
+        heat_numbers = run_data.keys()
 
         err = []
-        results = []
-        for heat_data in reader:
-            async def create_heat():
-                heat = Heat(race=race, heat_number=heat_data.pop('heat_number'))
-                for lane_num, car_num in heat_data.items():
-                    heat.runs.append(HeatRun(
+        async def create_heats():
+            await Heat.objects.bulk_create(new_heats)
+            heats = await Heat.objects.fields(['heat_number']).all(Heat.heat_number << heat_numbers)
+
+            new_runs = []
+            for heat in heats:
+                for lane_num, car_num in run_data.get(heat.heat_number, {}):
+                    new_runs.append(HeatRun(
+                        heat=heat.id,
                         lane=lanes.get(lane_num),
                         car=cars.get(car_num)
                     ))
 
-                await heat.save_related()
-                return heat
+            await HeatRun.objects.bulk_create(new_runs)
 
-            heat = await catch_errors(create_heat, err)
-            results.append(heat)
+        await catch_errors(create_heats, err)
+        if len(err) > 0:
+            return invalid_data(err)
 
-        return results if len(err) == 0 else invalid_data(err)
+        return await Heat.objects.prefetch_related([Heat.runs.car, Heat.runs.lane]).all(Heat.heat_number << heat_numbers)
 
     except NoMatch as e:
         not_found(race_id)
@@ -313,38 +366,19 @@ async def delete_one_race_heat(race_id: int, heat_num: int):
 
 
 @router.get('/{race_id}/heats/{heat_num}/runs', response_model=List[RHeatRunIds])
-async def get_one_race_heat_runs(race_id: int, heat_num: int):
+async def get_all_race_heat_runs(race_id: int, heat_num: int):
     try:
         race = await Race.objects.get(id=race_id)
-        try:
-            heat = await race.heats.get(heat_number=heat_num)
-            return await heat.runs.all()
-        except NoMatch as e:
-            msg = f"Not Found: Heat(heat_number={heat_num}, race_id={race_id})"
-            raise HTTPException(status_code=404, detail=msg)
+        return await get_heat_runs(race, heat_num)
+
     except NoMatch as e:
         not_found(race_id)
 
 @router.put('/{race_id}/heats/{heat_num}/runs', response_model=list[RHeatRunIds])
-async def update_one_race_heat_runs(race_id: int, heat_num: int, runs: List[RHeatRunUpdateIds]):
+async def update_all_race_heat_runs(race_id: int, heat_num: int, runs: List[RHeatRunUpdateIds]):
     try:
         race = await Race.objects.get(pk=race_id)
-        try:
-            heat_db = await race.heats.get(heat_number=heat_num)
-            heat_runs = {r.id: r for r in await heat_db.runs.all()}
-
-            err = []
-            for run in runs:
-                async def update_runs():
-                    heatrun = heat_runs.get(run.id)
-                    await heatrun.update(delta_ms=run.delta_ms)
-
-                await catch_errors(update_runs, err)
-
-            return list(heat_runs.values()) if len(err) == 0 else invalid_data(err)
-        except NoMatch as e:
-            msg = f"Not Found: Heat(heat_number={heat_num}, race_id={race_id})"
-            raise HTTPException(status_code=404, detail=msg)
+        return await update_heat_runs(race, heat_num, runs)
 
     except NoMatch as e:
         not_found(race_id)

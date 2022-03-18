@@ -33,7 +33,7 @@ async def get_all():
 # Good - Post (insert) a new track, nested saves any lanes
 @router.post('', response_model=TrackReturnFull)
 async def create_one(track: TrackCreate):
-    track = Track(**track.dict())
+    track = Track(**track.dict(exclude_none=True))
     await track.save_related()
     return track
 
