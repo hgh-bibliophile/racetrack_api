@@ -14,7 +14,7 @@ class Race(BaseModel, DateFieldMixin):
 
     name: str = ormar.String(max_length=64, index=True)
     watch_link: str = ormar.String(max_length=25, index=True, unique=True)
-    track = ormar.ForeignKey(Track, skip_reverse=True)
+    track = ormar.ForeignKey(Track, skip_reverse=True, ondelete='SET NULL')
 
     place: str = ormar.String(max_length=255, nullable=True)
     race_date = ormar.Date(index=True, nullable=True)
@@ -22,7 +22,7 @@ class Race(BaseModel, DateFieldMixin):
 
     status = ormar.String(max_length=6, default='future', nullable=False, choices=['future', 'active', 'closed'])
 
-    owner = ormar.ForeignKey(User)
+    owner = ormar.ForeignKey(User, ondelete='CASCADE')
 
     @ormar.property_field
     def cars_ct(self):

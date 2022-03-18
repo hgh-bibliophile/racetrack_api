@@ -1,19 +1,8 @@
-from typing import List
-
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
-
-
-import asyncio
-import uvicorn
-from fastapi import FastAPI
-from fastapi.routing import APIRouter
+from fastapi import WebSocket, WebSocketDisconnect, APIRouter
 
 from fastapi_websocket_pubsub import PubSubEndpoint
 
 from models.heat import Heat
-
-from fastapi import APIRouter, Depends, HTTPException
 
 router = APIRouter(
   prefix="/ws",

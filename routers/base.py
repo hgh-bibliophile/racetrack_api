@@ -32,16 +32,18 @@ class CORSRoute(APIRoute):
             response: Response = await original_route_handler(request)
 
             origin = request.headers.get('origin')
+            print(origin)
             if origin in CORSRoute.origins:
                 response.headers['Access-Control-Allow-Origin'] = origin
-                response.headers['Access-Control-Allow-Methods'] = '*'
-                response.headers['Access-Control-Allow-Headers'] = '*'
+
+            response.headers['Access-Control-Allow-Methods'] = '*'
+            response.headers['Access-Control-Allow-Headers'] = '*'
 
             return response
 
         return custom_route_handler
 
-options_router = APIRouter(route_class=CORSRoute)
+options_router = APIRouter(route_class=CORSRoute, tags=["CORS"])
 
 # handle CORS preflight requests
 @options_router.options('/{rest_of_path:path}')

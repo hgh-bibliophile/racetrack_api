@@ -1,19 +1,14 @@
-import pydantic
 from typing import List, Optional
+
 import datetime
+
+from .base import BaseModel, BaseId, RequiredBaseId
+
+from .heats import HeatReturnFull, HeatReturnIds
+
 # ----------
 # Race
 # ----------
-
-class BaseModel(pydantic.BaseModel):
-    class Config:
-        orm_mode = True
-
-class BaseId(BaseModel):
-    id: Optional[int]
-
-class RequiredBaseId(BaseModel):
-    id: int
 
 class RTrack(BaseId):
     name: Optional[str]
@@ -30,11 +25,22 @@ class RCarBase(BaseModel):
 class RCar(RCarBase, BaseId):
     runs_ct: Optional[int]
 
+class RHeat(HeatReturnFull):
+    pass
 
-class RaceBase(pydantic.BaseModel):
-    class Config:
-        orm_mode = True
+class RHeatIds(HeatReturnIds):
+    pass
 
+class RHeatRunCreate(BaseModel):
+    car_number: int
+    lane_number: int
+    delta_ms: Optional[int]
+
+class RHeatCreate(BaseModel):
+    heat_number: int
+    runs: Optional[List[RHeatRunCreate]]
+
+class RaceBase(BaseModel):
     name: Optional[str]
     watch_link: Optional[str]
     place: Optional[str]
@@ -43,11 +49,10 @@ class RaceBase(pydantic.BaseModel):
     status: Optional[str]
 
 class RaceUpdate(RaceBase):
-    class Config:
-        orm_mode = True
-
     track: Optional[RequiredBaseId]
     owner: Optional[RequiredBaseId]
+
+class RaceCreate(RaceUpdate):
     cars: Optional[List[RCarBase]]
 
 class RaceReturnBase(RaceBase, BaseId):
@@ -61,9 +66,11 @@ class RaceReturnId(RaceReturn):
     track: Optional[BaseId]
     owner: Optional[BaseId]
 
-class RaceReturnFull(RaceReturnBase):
+class RaceReturnUpdate(RaceReturnBase):
     track: Optional[RTrack]
+    owner: Optional[ROwner]
     heats_ct: Optional[int]
     cars_ct: Optional[int]
+
+class RaceReturnFull(RaceReturnUpdate):
     cars: Optional[List[RCar]]
-    owner: Optional[ROwner]

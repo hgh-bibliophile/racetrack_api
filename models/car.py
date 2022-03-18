@@ -12,7 +12,7 @@ class Car(BaseModel):
         tablename = 'cars'
         constraints = [ormar.UniqueColumns("race", "car_number")]
 
-    race = ormar.ForeignKey(Race)
+    race = ormar.ForeignKey(Race, ondelete='CASCADE')
 
     car_number = ormar.Integer(index=True)
     name = ormar.String(max_length=64)

@@ -28,11 +28,11 @@ class TrackBase(pydantic.BaseModel):
 
     name: Optional[str]
 
-class TrackUpdate(TrackBase):
+class TrackCreate(TrackBase):
     lanes: Optional[List[TLaneUpdate]]
 
 class TrackReturn(TrackBase, BaseId):
-    lane_ct: Optional[int]
+    lanes_ct: Optional[int]
 
 class TrackReturnFull(TrackReturn):
     lanes: Optional[List[TLane]]

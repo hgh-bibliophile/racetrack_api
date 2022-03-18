@@ -12,7 +12,7 @@ class Lane(BaseModel):
         tablename = 'lanes'
         constraints = [ormar.UniqueColumns("track", "lane_number")]
 
-    track = ormar.ForeignKey(Track)
+    track = ormar.ForeignKey(Track, ondelete='CASCADE')
 
     lane_number = ormar.Integer(index=True)
 
