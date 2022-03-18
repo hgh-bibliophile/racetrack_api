@@ -2,10 +2,14 @@ import csv
 from fastapi import HTTPException, UploadFile
 from typing import List
 
+from ormar.exceptions import NoMatch, ModelError
+from pydantic.error_wrappers import ValidationError
+from asyncpg.exceptions import UniqueViolationError
+
 def invalid_data(msg):
     raise HTTPException(status_code=422, detail=msg)
 
-async def catch_errors(func):
+async def catch_errors(func, err):
     try:
         return await func()
     except UniqueViolationError as e:

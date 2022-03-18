@@ -25,11 +25,34 @@ class RCarBase(BaseModel):
 class RCar(RCarBase, BaseId):
     runs_ct: Optional[int]
 
-class RHeat(HeatReturnFull):
+class _Car(RCarBase, BaseId):
     pass
 
-class RHeatIds(HeatReturnIds):
-    pass
+class _Lane(BaseId):
+    lane_number: Optional[int]
+    color: Optional[str]
+    distance: Optional[float]
+
+class _HeatRun(BaseId):
+    car: Optional[_Car]
+    lane: Optional[_Lane]
+    delta_ms: Optional[int]
+
+class RHeatRunIds(BaseId):
+    car: Optional[BaseId]
+    lane: Optional[BaseId]
+    delta_ms: Optional[int]
+
+class HeatBase(BaseModel):
+    heat_number: Optional[int]
+
+class HeatReturn(HeatBase, BaseId):
+    runs_ct: Optional[int]
+    ran_at: Optional[datetime.datetime]
+
+class RHeat(HeatReturn):
+    runs: Optional[List[_HeatRun]]
+
 
 class RHeatRunCreate(BaseModel):
     car_number: int
@@ -39,6 +62,20 @@ class RHeatRunCreate(BaseModel):
 class RHeatCreate(BaseModel):
     heat_number: int
     runs: Optional[List[RHeatRunCreate]]
+
+class RHeatRunUpdate(BaseModel):
+    id: Optional[int]
+    car_number: Optional[int]
+    lane_number: Optional[int]
+    delta_ms: Optional[int]
+
+class RHeatRunUpdateIds(BaseModel):
+    id: int
+    delta_ms: int
+
+class RHeatUpdate(BaseModel):
+    heat_number: Optional[int]
+    runs: Optional[List[RHeatRunUpdate]]
 
 class RaceBase(BaseModel):
     name: Optional[str]
