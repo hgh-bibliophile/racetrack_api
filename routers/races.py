@@ -265,7 +265,7 @@ async def create_race_heats(race_id: int, heats: List[RHeatCreate]):
 async def create_race_heats_from_csv_file(race_id: int, csv_heats: UploadFile):
     try:
         reader = await get_csv_reader(csv_heats)
-        race = await Race.objects.prefetch_related([Race.track.lanes, Race.cars]).get(pk=race_id)
+        race = await Race.objects.prefetch_related([Race.track.lanes, Race.cars]).get(id=race_id)
         if race.track == None:
             return invalid_data(f'Race(pk={race_id}) does not have a valid track. Please assign a track before creating HeatRuns.')
 
@@ -284,7 +284,7 @@ async def create_race_heats_from_csv_file(race_id: int, csv_heats: UploadFile):
         err = []
         async def create_heats():
             await Heat.objects.bulk_create(new_heats)
-            heats = await Heat.objects.fields(['heat_number']).all(Heat.heat_number << heat_numbers)
+            heats = await Heat.objects.fields(['heat_number']).all((Heat.race.id == race.id) & (Heat.heat_number << heat_numbers))
 
             new_runs = []
             for heat in heats:
