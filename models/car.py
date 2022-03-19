@@ -20,3 +20,9 @@ class Car(BaseModel):
     @ormar.property_field
     def runs_ct(self):
         return len(self.runs)
+
+    @ormar.property_field
+    def top_run(self):
+        if self.runs_ct == 0:
+            return
+        return sorted(self.runs, key=lambda r: float('inf') if r.delta_ms is None or r.delta_ms == 0 else r.delta_ms)[0]

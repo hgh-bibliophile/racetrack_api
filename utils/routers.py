@@ -31,7 +31,7 @@ async def add_model(parent_array: List, child_data, child_class):
     for i, child in enumerate(child_data):
         try:
             if not isinstance(child, dict):
-                child = child.dict()
+                child = child.dict(exclude_none=True)
             child = child_class(**child)
             await parent_array.add(child)
             results.append(child)

@@ -13,7 +13,7 @@ from models.car import Car
 from models.heat import Heat
 from models.heat_run import HeatRun
 
-from schema.races import RaceCreate, RaceUpdate, RaceReturnId, RaceReturnFull, RaceReturnUpdate, RCar, RCarCreate, RHeat, RHeatCreate, RHeatRunIds, RHeatUpdate, RHeatRunUpdateIds
+from schema.races import RaceCreate, RaceUpdate, RaceReturnId, RaceReturnFull, RaceReturnUpdate, RCar, RCarCreate, RHeat, RHeatCreate, RHeatRunIds, RHeatUpdate, RHeatRunUpdateIds, RCarSpeed
 
 from .base import exclude_routes, CORSRoute
 from .ws import get_heat_runs, update_heat_runs
@@ -98,6 +98,15 @@ async def get_all_race_cars(race_id: int):
         return await Car.objects.prefetch_related([Car.runs]).filter(race__id=race_id).all()
     except NoMatch as e:
         not_found(race_id)
+
+# Good - Get list of cars + speeds for one race
+@router.get('/{race_id}/speeds', response_model=List[RCarSpeed])
+async def get_all_race_cars(race_id: int):
+    try:
+        return await Car.objects.prefetch_related([Car.runs.lane]).filter(race__id=race_id).all()
+    except NoMatch as e:
+        not_found(race_id)
+
 
 # Good - Delete all cars
 @router.delete('/{race_id}/cars')

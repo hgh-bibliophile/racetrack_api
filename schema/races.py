@@ -33,6 +33,16 @@ class RCar(_Car):
     runs_ct: Optional[int]
 
 
+class RCarHeatRun(BaseId):
+    lane: Optional[_Lane]
+    delta_ms: Optional[int]
+    mph: Optional[float]
+    fps: Optional[float]
+    mps: Optional[float]
+
+class RCarSpeed(RCar):
+    top_run: Optional[RCarHeatRun]
+
 class HeatBase(BaseModel):
     heat_number: Optional[int]
 

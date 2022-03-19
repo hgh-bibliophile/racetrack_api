@@ -2,8 +2,9 @@ from fastapi_crudrouter import OrmarCRUDRouter
 
 from models.heat_run import HeatRun
 
+from .base import CORSRoute
 
-router = OrmarCRUDRouter(schema=HeatRun)
+router = OrmarCRUDRouter(schema=HeatRun, route_class=CORSRoute)
 
 # Good - Delete all heatruns
 @router.delete('')
