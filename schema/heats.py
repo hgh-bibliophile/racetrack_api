@@ -18,6 +18,9 @@ class _HeatRun(BaseId):
     car: Optional[_Car]
     lane: Optional[_Lane]
     delta_ms: Optional[int]
+    mph: Optional[float]
+    fps: Optional[float]
+    mps: Optional[float]
 
 class _HeatRunIds(BaseModel):
     car: Optional[BaseId]

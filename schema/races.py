@@ -4,7 +4,7 @@ import datetime
 
 from .base import BaseModel, BaseId, RequiredBaseId
 
-from .heats import HeatReturnFull, HeatReturnIds
+from .heats import HeatReturnFull, HeatReturnIds, _Car, _Lane, _HeatRun, _HeatRunIds
 from .ws import WS_HeatRun, WS_HeatRunUpdate
 
 # ----------
@@ -25,30 +25,13 @@ class ROwner(BaseId):
     username: Optional[str]
     email: Optional[str]
 
-class RCarBase(BaseModel):
+class RCarCreate(BaseModel):
     car_number: Optional[int]
     name: Optional[str]
 
-class RCar(RCarBase, BaseId):
+class RCar(_Car):
     runs_ct: Optional[int]
 
-class _Car(RCarBase, BaseId):
-    pass
-
-class _Lane(BaseId):
-    lane_number: Optional[int]
-    color: Optional[str]
-    distance: Optional[float]
-
-class _HeatRun(BaseId):
-    car: Optional[_Car]
-    lane: Optional[_Lane]
-    delta_ms: Optional[int]
-
-class RHeatRunIds(BaseId):
-    car: Optional[BaseId]
-    lane: Optional[BaseId]
-    delta_ms: Optional[int]
 
 class HeatBase(BaseModel):
     heat_number: Optional[int]
@@ -59,7 +42,6 @@ class HeatReturn(HeatBase, BaseId):
 
 class RHeat(HeatReturn):
     runs: Optional[List[_HeatRun]]
-
 
 class RHeatRunCreate(BaseModel):
     car_number: int
@@ -97,7 +79,7 @@ class RaceUpdate(RaceBase):
     owner: Optional[RequiredBaseId]
 
 class RaceCreate(RaceUpdate):
-    cars: Optional[List[RCarBase]]
+    cars: Optional[List[RCarCreate]]
 
 class RaceReturnBase(RaceBase, BaseId):
     created_date: Optional[datetime.datetime]

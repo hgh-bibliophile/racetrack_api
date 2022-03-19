@@ -21,3 +21,33 @@ class HeatRun(BaseModel):
     lane = ormar.ForeignKey(Lane, skip_reverse=True, ondelete='SET NULL')
 
     delta_ms = ormar.Integer(nullable=True)
+
+    @ormar.property_field
+    def mph(self):
+        if self.delta_ms == None or self.lane.distance == None:
+            return
+
+        hours = (self.delta_ms / 1000) / 3600
+        miles = (self.lane.distance / 12) / 5280
+
+        return miles / hours * 24.444444444444444444
+
+    @ormar.property_field
+    def mps(self):
+        if self.delta_ms == None or self.lane.distance == None:
+            return
+
+        sec = self.delta_ms / 1000
+        meters = self.lane.distance / 39.37007874015748
+
+        return meters / sec
+
+    @ormar.property_field
+    def fps(self):
+        if self.delta_ms == None or self.lane.distance == None:
+            return
+
+        sec = self.delta_ms / 1000
+        feet = self.lane.distance / 12
+
+        return feet / sec

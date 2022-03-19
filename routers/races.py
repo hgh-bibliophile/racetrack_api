@@ -13,7 +13,7 @@ from models.car import Car
 from models.heat import Heat
 from models.heat_run import HeatRun
 
-from schema.races import RaceCreate, RaceUpdate, RaceReturnId, RaceReturnFull, RaceReturnUpdate, RCar, RCarBase, RHeat, RHeatCreate, RHeatRunIds, RHeatUpdate, RHeatRunUpdateIds
+from schema.races import RaceCreate, RaceUpdate, RaceReturnId, RaceReturnFull, RaceReturnUpdate, RCar, RCarCreate, RHeat, RHeatCreate, RHeatRunIds, RHeatUpdate, RHeatRunUpdateIds
 
 from .base import exclude_routes, CORSRoute
 from .ws import get_heat_runs, update_heat_runs
@@ -48,6 +48,14 @@ async def delete_all():
     deleted += await HeatRun.objects.count()
     await Race.objects.delete(each=True)
     return {"deleted_rows": deleted}
+
+# Get - Get one race, returns w/ list of cars
+@router.get('/l/{race_link}', response_model=RaceReturnId)
+async def get_one(race_link: str):
+    try:
+        return await Race.objects.select_all().get(watch_link=race_link)
+    except NoMatch as e:
+        raise HTTPException(status_code=404, detail=f"Not Found: Race({race_link})")
 
 # Get - Get one race, returns w/ list of cars
 @router.get('/{item_id}', response_model=RaceReturnFull)
@@ -107,7 +115,7 @@ async def delete_all_race_cars(race_id: int):
 
 # Good - Create & add new cars to one race -> doesn't return race in response
 @router.post('/{race_id}/cars', response_model=List[RCar])
-async def create_race_cars(race_id: int, cars: List[RCarBase]):
+async def create_race_cars(race_id: int, cars: List[RCarCreate]):
     try:
         race = await Race.objects.get(pk=race_id)
         return await add_model(race.cars, cars, Car)
@@ -141,7 +149,7 @@ async def get_one_race_car(race_id: int, car_num: int):
         not_found(race_id)
 
 @router.put('/{race_id}/cars/{car_num}', response_model=RCar)
-async def update_one_race_car(race_id: int, car_num: int, car: RCarBase):
+async def update_one_race_car(race_id: int, car_num: int, car: RCarCreate):
     try:
         race = await Race.objects.get(id=race_id)
         try:

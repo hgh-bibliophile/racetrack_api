@@ -28,17 +28,17 @@ manager = ConnectionManager()
 
 async def get_heat_runs(race: Race, heat_num: int):
     try:
-        heat = await race.heats.prefetch_related(Heat.runs.lane).get(heat_number=heat_num)
-        return [await run_ids(run) for run in await heat.runs.all()]
+        heat = await race.heats.get(heat_number=heat_num)
+        return [await run_ids(run) for run in await heat.runs.prefetch_related([HeatRun.lane, HeatRun.car]).all()]
     except NoMatch as e:
         msg = f"Not Found: Heat(heat_number={heat_num}, race_id={race_id})"
         raise HTTPException(status_code=404, detail=msg)
 
 async def update_heat_runs(race: Race, heat_num: int, runs: List[WS_HeatRunUpdate]):
     try:
-        heat_db = await race.heats.prefetch_related(Heat.runs.lane).get(heat_number=heat_num)
+        heat_db = await race.heats.get(heat_number=heat_num)
         await heat_db.update(ran_at=datetime.now())
-        heat_runs = {r.id: r for r in await heat_db.runs.all()}
+        heat_runs = {r.id: r for r in await heat_db.runs.prefetch_related([HeatRun.lane, HeatRun.car]).all()}
 
         err = []
         _runs = []
@@ -62,7 +62,6 @@ async def update_heat_runs(race: Race, heat_num: int, runs: List[WS_HeatRunUpdat
         raise HTTPException(status_code=404, detail=msg)
 
 async def run_ids(heat_run: HeatRun):
-    await heat_run.lane.load()
     return WS_HeatRun(**heat_run.dict())
 
 def ws_data(heat_num, heat_data):
