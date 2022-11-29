@@ -34,7 +34,7 @@ if db_name == 'sqlite':
 elif db_name == 'postgresql' and os.environ.get('DATABASE_URL', False):
     DB_URL = db.POSTGRESQL_DATABASE_URL
 else:
-    os.exit()
+    exit()
 
 print('Database:', DB_URL)
 # Inject environment variable values into connection string
