@@ -5,18 +5,17 @@ name = "pypi"
 
 [packages]
 sqlalchemy = "*"
-fastapi = "*"
+fastapi = "~=0.75.0"
 uvicorn = "*"
-ormar = {extras = ["sqlite"], version = "*"}
+ormar = {version = "~=0.10.25", extras = ["sqlite"]}
 orjson = "*"
 alembic = "*"
 cryptography = "*"
 fastapi-crudrouter = "*"
 asyncpg = "*"
 psycopg2 = "*"
-fastapi-websocket-pubsub = "*"
+fastapi-websocket-pubsub = "==0.2.0"
 fastapi-users = {version = "~=9.2.6", extras = ["ormar"]}
-
 [dev-packages]
 
 [requires]
