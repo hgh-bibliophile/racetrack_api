@@ -15,7 +15,7 @@ fastapi-crudrouter = "*"
 asyncpg = "*"
 psycopg2 = "*"
 fastapi-websocket-pubsub = "*"
-fastapi-users = {extras = ["ormar"], version = "*"}
+fastapi-users = {version = "~=9.2.6", extras = ["ormar"]}
 
 [dev-packages]
 
