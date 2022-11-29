@@ -8,7 +8,7 @@ services:
     #dockerfilePath: Dockerfile.render
     plan: free # optional; defaults to starter
     numInstances: 1
-    buildCommand: pip install -r requirements.txt; alembic -n postgresql upgrade head
+    buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host=0.0.0.0 --port 10000
     domains: # custom domains
       - 'api.racetrack.gratiafides.com'
