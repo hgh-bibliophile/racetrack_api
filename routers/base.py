@@ -2,7 +2,7 @@ from fastapi import FastAPI, APIRouter, Request, Response
 from fastapi.routing import APIRoute
 
 from typing import Callable
-
+from utils.settings import cors_allowed_origins
 
 exclude_routes = {
     'get_all_route': False,
@@ -15,15 +15,7 @@ exclude_routes = {
 
 class CORSRoute(APIRoute):
 
-    origins = [
-        "http://racetrack.gratiafides.com",
-        "https://racetrack.gratiafides.com",
-        "http://api.racetrack.gratiafides.com",
-        "https://api.racetrack.gratiafides.com",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:8000"
-    ]
+    origins = cors_allowed_origins
 
     def get_route_handler(self) -> Callable:
         original_route_handler = super().get_route_handler()
@@ -32,7 +24,7 @@ class CORSRoute(APIRoute):
             response: Response = await original_route_handler(request)
 
             origin = request.headers.get('origin')
-            print(origin)
+            #print(origin)
             if origin in CORSRoute.origins:
                 response.headers['Access-Control-Allow-Origin'] = origin
 

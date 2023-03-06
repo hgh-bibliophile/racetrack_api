@@ -5,31 +5,35 @@ from datetime import datetime
 
 from ormar.exceptions import NoMatch, ModelError
 
-from utils.ws import ConnectionManager
+from utils import settings
+from utils.socket import SocketManager
 from utils.routers import catch_errors
 
 from models.race import Race
 from models.heat import Heat
 from models.heat_run import HeatRun
 
-from schema.ws import WS_HeatRun, WS_HeatRunUpdate
+from schema.live import WS_HeatRun, WS_HeatRunUpdate
 from schema.races import RHeatRunIds, RHeatRunUpdateIds
 
 from .base import CORSRoute
 
 router = APIRouter(
-  prefix="/ws",
+  prefix="/live",
   tags=["Websockets"],
   responses={404: {"description": "Not found"}},
   route_class=CORSRoute
 )
 
-manager = ConnectionManager()
+sio = SocketManager(
+    origins=settings.cors_allowed_origins
+)
 
 async def get_heat_runs(race: Race, heat_num: int):
     try:
         heat = await race.heats.get(heat_number=heat_num)
-        return [await run_ids(run) for run in await heat.runs.prefetch_related([HeatRun.lane, HeatRun.car]).all()]
+        heat_runs = await heat.runs.prefetch_related([HeatRun.lane, HeatRun.car]).all()
+        return [await run_ids(run) for run in heat_runs]
     except NoMatch as e:
         msg = f"Not Found: Heat(heat_number={heat_num}, race_id={race_id})"
         raise HTTPException(status_code=404, detail=msg)
@@ -66,8 +70,10 @@ async def run_ids(heat_run: HeatRun):
 
 def ws_data(heat_num, heat_data):
     return {
-        'heat_number': heat_num,
-        'runs': [r.dict() for r in heat_data]
+        'data': {
+            'heat_number': heat_num,
+            'runs': [r.dict() for r in heat_data]
+        }
     }
 
 # Register a regular HTTP route
@@ -76,7 +82,7 @@ async def start_heat(race_link: str, heat_num: int):
     try:
         race = await Race.objects.get(watch_link=race_link)
         heat_data =  await get_heat_runs(race, heat_num)
-        await manager.broadcast(race_link, 'start_heat', ws_data(heat_num, heat_data))
+        await sio.emit('start_heat', ws_data(heat_num, heat_data), room=race_link)
         return heat_data
     except NoMatch as e:
         not_found(race_id)
@@ -88,18 +94,23 @@ async def end_heat(race_link: str, heat_num: int, runs: List[WS_HeatRunUpdate]):
         race = await Race.objects.get(watch_link=race_link)
         heat_data = await update_heat_runs(race, heat_num, runs)
 
-        await manager.broadcast(race_link, 'heat_results', ws_data(heat_num, heat_data))
+        await sio.emit('heat_results', ws_data(heat_num, heat_data), room=race_link)
         return heat_data
 
     except NoMatch as e:
         not_found(race_id)
 
 
-@router.websocket("/watch/{race_link}")
-async def websocket_endpoint(websocket: WebSocket, race_link: str):
-    await manager.connect(race_link, websocket)
-    try:
-        while True:
-            await websocket.receive_text()
-    except WebSocketDisconnect:
-        manager.disconnect(race_link, websocket)
+
+
+
+
+# ------
+#@router.websocket("/watch/{race_link}")
+#async def websocket_endpoint(websocket: WebSocket, race_link: str):
+#    await manager.connect(race_link, websocket)
+#    try:
+#        while True:
+#            await websocket.receive_text()
+#    except WebSocketDisconnect:
+#        manager.disconnect(race_link, websocket)

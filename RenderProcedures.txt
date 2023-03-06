@@ -1,0 +1,16 @@
+Set up Render database:
+> $env:DATABASE_URL='EXTERNAL DATABASE URL' -> postgresql://
+> alembic -n postgresql upgrade head
+
+Restore dump:
+> pg_restore --verbose --clean --no-acl --no-owner -d $env:DATABASE_URL file.dump
+
+To access database:
+> $env:PGPASSWORD='PASSWORD'
+> PSQL SETUP COMMAND (sans password)
+> \dt -> tables
+> \list -> databases
+
+
+Ubuntu Redis server:
+> sudo service redis-server start

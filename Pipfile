@@ -5,17 +5,19 @@ name = "pypi"
 
 [packages]
 sqlalchemy = "*"
-fastapi = "~=0.75.0"
-uvicorn = "*"
-ormar = {version = "~=0.10.25", extras = ["sqlite"]}
+fastapi = "*"
+uvicorn = {extras = ["standard"], version = "*"}
+ormar = {version = "*", extras = ["sqlite"]}
 orjson = "*"
 alembic = "*"
 cryptography = "*"
 fastapi-crudrouter = "*"
 asyncpg = "*"
 psycopg2 = "*"
-fastapi-websocket-pubsub = "==0.2.0"
-fastapi-users = {version = "~=9.2.6", extras = ["ormar"]}
+python-socketio = "*"
+aioredis = "*"
+python-multipart = "*"
+
 [dev-packages]
 
 [requires]

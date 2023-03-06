@@ -1,7 +1,7 @@
 from fastapi_crudrouter import OrmarCRUDRouter
 from typing import List
 
-
+from ormar.exceptions import NoMatch
 
 from models.heat import Heat
 from models.heat_run import HeatRun

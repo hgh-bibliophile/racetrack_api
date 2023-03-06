@@ -1,6 +1,8 @@
 from fastapi_crudrouter import OrmarCRUDRouter
 from typing import List
 
+from ormar.exceptions import NoMatch
+
 from models.car import Car
 
 from schema.cars import CarBase, CarCreate, CarReturn, CarReturnFull, CarReturnIds
@@ -13,7 +15,7 @@ router = OrmarCRUDRouter(schema=Car, route_class=CORSRoute)
 @router.get('', response_model=List[CarReturn])
 async def get_all():
     return await Car.objects.select_all().all()
-    
+
 # Good - Post (insert) a new car, nested saves any lanes
 @router.post('', response_model=CarReturnFull)
 async def create_one(car: CarCreate):

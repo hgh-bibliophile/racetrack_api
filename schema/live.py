@@ -11,7 +11,7 @@ class _Car(BaseId):
     name: str
 
 class WS_HeatRun(BaseId):
-    car: _Car
+    car: Optional[_Car]
     lane: _Lane
     delta_ms: Optional[int]
     mph: Optional[float]

@@ -16,7 +16,7 @@ from models.heat_run import HeatRun
 from schema.races import RaceCreate, RaceUpdate, RaceReturnId, RaceReturnFull, RaceReturnUpdate, RCar, RCarCreate, RHeat, RHeatCreate, RHeatRunIds, RHeatUpdate, RHeatRunUpdateIds, RCarSpeed
 
 from .base import exclude_routes, CORSRoute
-from .ws import get_heat_runs, update_heat_runs
+from .live import get_heat_runs, update_heat_runs
 
 from utils.routers import get_csv_reader, add_model, invalid_data, catch_errors
 

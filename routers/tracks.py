@@ -111,11 +111,11 @@ async def create_race_lanes_from_csv_file(track_id: int, csv_lanes: UploadFile):
 # -----------------
 
 @router.get('/{track_id}/lanes/{lane_num}', response_model=TLane)
-async def get_one_track_lane(track_id: int, lane_num: int):
+async def get_one_track_lane(track_id: int, lane_num: int, id: bool = False):
     try:
         track = await Track.objects.get(id=track_id)
         try:
-            lane = await track.lanes.get(lane_number=lane_num)
+            lane = await track.lanes.get(**{'pk' if id else 'lane_number': lane_num})
         except NoMatch as e:
             msg = f"Not Found: Lane(lane_number={lane_num}, track_id={track_id})"
             raise HTTPException(status_code=404, detail=msg)
@@ -124,12 +124,12 @@ async def get_one_track_lane(track_id: int, lane_num: int):
         not_found(track_id)
 
 @router.put('/{track_id}/lanes/{lane_num}', response_model=TLane)
-async def update_one_track_lane(track_id: int, lane_num: int, lane: TLaneUpdate):
+async def update_one_track_lane(track_id: int, lane_num: int, lane: TLaneUpdate, id: bool = False):
     try:
         track = await Track.objects.get(id=track_id)
         try:
             update_data = lane.dict(exclude_none=True)
-            lane_db = await track.lanes.get(lane_number=lane_num)
+            lane_db = await track.lanes.get(**{'pk' if id else 'lane_number': lane_num})
             await lane_db.update(_columns=list(update_data.keys()), **update_data)
             return lane_db
         except NoMatch as e:
@@ -141,11 +141,11 @@ async def update_one_track_lane(track_id: int, lane_num: int, lane: TLaneUpdate)
 
 
 @router.delete('/{track_id}/lanes/{lane_num}', response_model=TLane)
-async def delete_one_track_lane(track_id: int, lane_num: int):
+async def delete_one_track_lane(track_id: int, lane_num: int, id: bool = False):
     try:
         track = await Track.objects.get(id=track_id)
         try:
-            lane = await track.lanes.get(lane_number=lane_num)
+            lane = await track.lanes.get(**{'pk' if id else 'lane_number': lane_num})
             track.lanes.remove(lane, keep_reversed=False)
             deleted = 1
             return {"deleted_rows": deleted}

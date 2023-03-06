@@ -5,7 +5,7 @@ import datetime
 from .base import BaseModel, BaseId, RequiredBaseId
 
 from .heats import HeatReturnFull, HeatReturnIds, _Car, _Lane, _HeatRun, _HeatRunIds
-from .ws import WS_HeatRun, WS_HeatRunUpdate
+from .live import WS_HeatRun, WS_HeatRunUpdate
 
 # ----------
 # Race

@@ -1,30 +1,17 @@
 import ormar
 
-from fastapi_users.db import OrmarBaseUserModel, OrmarUserDatabase
-from fastapi_users import models
+#from fastapi_users.db import OrmarBaseUserModel, OrmarUserDatabase
+#from fastapi_users import models
 
-from .base import BaseMeta
-
-
-class PydUser(models.BaseUser):
-    username: str
+from .base import BaseModel, BaseMeta
 
 
-class PydUserCreate(models.BaseUserCreate):
-    username: str
 
-
-class PydUserUpdate(models.BaseUserUpdate):
-    username: str
-
-
-class PydUserDB(PydUser, models.BaseUserDB):
-    pass
-
-class User(OrmarBaseUserModel):
+class User(BaseModel):
     class Meta(BaseMeta):
         tablename = "users"
 
+    email: str = ormar.String(max_length=64, unique=True, index=True)
     username: str = ormar.String(max_length=64, unique=True, index=True)
 
 
