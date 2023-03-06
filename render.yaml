@@ -17,6 +17,11 @@ services:
         fromDatabase:
           name: racetrack-io
           property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: racetrack-io
+          property: connectionString
 
 databases: # Render PostgreSQL database
   - name: racetrack-io
