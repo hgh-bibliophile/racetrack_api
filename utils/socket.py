@@ -1,9 +1,11 @@
 import socketio
 from typing import List
 
+from db import REDIS_URL
+
 class SocketManager:
     def __init__(self, origins: List[str]):
-        mgr = socketio.AsyncRedisManager('redis://localhost:6379')
+        mgr = socketio.AsyncRedisManager(REDIS_URL)
         self.sio = socketio.AsyncServer(
             client_manager=mgr,
             cors_allowed_origins=origins,
