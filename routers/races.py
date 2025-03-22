@@ -238,7 +238,7 @@ async def create_race_heats(race_id: int, heats: List[RHeatCreate]):
         err = []
         async def create_heats():
             await Heat.objects.bulk_create(new_heats)
-            heats = await Heat.objects.fields(['heat_number']).all(Heat.heat_number << heat_numbers)
+            heats = await Heat.objects.fields(['heat_number']).all((Heat.race.id == race.id) & (Heat.heat_number << heat_numbers))
 
             new_runs = []
             for heat in heats:
